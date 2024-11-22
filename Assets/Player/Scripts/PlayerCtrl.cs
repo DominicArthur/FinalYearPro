@@ -8,6 +8,8 @@ public class PlayerCtrl : MonoBehaviour
     float speedX, speedY;
     Rigidbody2D rb;
 
+    public Vector2 facingDirection = Vector2.up;
+
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -19,5 +21,13 @@ public class PlayerCtrl : MonoBehaviour
         speedX = Input.GetAxisRaw("Horizontal") * moveSpeed;
         speedY = Input.GetAxisRaw("Vertical") * moveSpeed;
         rb.velocity = new Vector2(speedX, speedY);
+
+        rb.velocity = new Vector2(speedX, speedY);
+
+        // Update facing direction if there is movement
+        if (speedX != 0 || speedY != 0)
+        {
+            facingDirection = new Vector2(speedX, speedY).normalized;
+        }
     }
 }
