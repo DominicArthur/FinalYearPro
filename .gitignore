@@ -10,6 +10,34 @@
 /[Ll]ogs/
 /[Uu]ser[Ss]ettings/
 
+# ML-Agents Training Results 
+results/
+models/
+*.onnx
+*.nn
+*.ckpt
+*.pb
+
+# Ignore Virtual Environment 
+venv/
+*.pyc
+__pycache__/
+.env
+
+# ML-Agents Configs & Logs
+*.tfevents
+checkpoint.pt
+summary/
+debug_logs/
+
+# Ignore TensorBoard Logs
+logs/
+runs/
+
+# Ignore audio files
+*.mp3
+*.mp3.meta
+
 # MemoryCaptures can get excessive in size.
 # They also could contain extremely sensitive data
 /[Mm]emoryCaptures/
