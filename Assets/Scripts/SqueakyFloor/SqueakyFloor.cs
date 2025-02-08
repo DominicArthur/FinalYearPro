@@ -1,15 +1,17 @@
+using System;
 using UnityEngine;
 
 public class SqueakyFloor : MonoBehaviour
 {
     public AudioClip squeakSound; // Remember squeak sound effect in inspector
     private AudioSource audioSource;
+    private AudioClip hornSound;
     void Start()
     {   
         // Add AudioSource component to the GameObject
         audioSource = gameObject.AddComponent<AudioSource>();
-        audioSource.clip = squeakSound;
         audioSource.playOnAwake = false; // Stops the sound from playing automatically
+        audioSource.clip = squeakSound;
     }
 
    private void OnTriggerEnter2D(Collider2D other)
