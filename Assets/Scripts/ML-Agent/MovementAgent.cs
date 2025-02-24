@@ -24,6 +24,7 @@ public class MovementAgent : Agent
     private float episodeTimer;
     private const float MAX_EPISODE_TIME = 20f;
     private const float STUCK_THRESHOLD = 3f;
+    public Transform target;
 
     public override void Initialize()
     {   
@@ -64,7 +65,10 @@ public class MovementAgent : Agent
          transform.position = safePosition;
          lastPosition = safePosition;
 
-        Debug.Log($"New Episode! Agent Reset to: {transform.position}");
+        // Moves target to a new random position
+        target.position = GetSafeRandomPosition();
+
+        Debug.Log($"New Episode! Agent Reset to: {transform.position}, Target at {target.position}");
     }
 
     private Vector2 GetSafeRandomPosition()
@@ -100,16 +104,24 @@ public class MovementAgent : Agent
         sensor.AddObservation(transform.position.x / boundarySize);  // 1st observation (X position)
         sensor.AddObservation(transform.position.y / boundarySize);  // 2nd observation (Y position)
 
+        // Target Position
+        sensor.AddObservation(target.position.x / boundarySize);
+        sensor.AddObservation(target.position.y / boundarySize);
+
          // Agent's velocity to allow it to learn acceleration & stopping
         sensor.AddObservation(rb.velocity.x / maxVelocity);
         sensor.AddObservation(rb.velocity.y / maxVelocity);
 
         // Distance from boundaries
         float distanceFromBoundary = Mathf.Min( 
-            boundarySize - Mathf.Abs(transform.position.x),
-            boundarySize - Mathf.Abs(transform.position.y)
-        ) / boundarySize;
+            (boundarySize - Mathf.Abs(transform.position.x)) / boundarySize,
+            (boundarySize - Mathf.Abs(transform.position.y)) / boundarySize
+        );
         sensor.AddObservation(distanceFromBoundary);
+
+        // Distance from target
+        float distanceToTarget = Vector2.Distance(transform.position, target.position);
+        sensor.AddObservation(distanceToTarget / boundarySize);
 
         // Time remaining in episode
         sensor.AddObservation(episodeTimer / MAX_EPISODE_TIME);
@@ -128,8 +140,8 @@ public class MovementAgent : Agent
        float moveY = actions.ContinuousActions[1];
 
        // Prevent agent from standing still when it gets zero actions
-       if (Mathf.Abs(moveX) < 0.05f) moveX = Random.Range(-0.1f, 0.1f);
-       if (Mathf.Abs(moveY) < 0.05f) moveY = Random.Range(-0.1f, 0.1f);
+       if (Mathf.Abs(moveX) < 0.05f) moveX += Mathf.Sign(Random.Range(-1f, 1f)) * 0.1f;
+       if (Mathf.Abs(moveY) < 0.05f) moveY += Mathf.Sign(Random.Range(-1f, 1f)) * 0.1f;
 
        Debug.Log($"Actions Received - X: {moveX}, Y: {moveY}");
 
@@ -164,11 +176,23 @@ public class MovementAgent : Agent
     {
         float totalReward = 0f;
 
+        // Reward for moving toward the target
+        float distanceToTarget = Vector2.Distance(currentPosition, target.position);
+        float movementReward = (1.0f - (distanceToTarget / boundarySize)) * 0.5f;
+        totalReward += movementReward;
+
+        // Extra reward for reaching the target
+        if (distanceToTarget < 0.5f)
+         {
+             totalReward += 2.0f; // Big reward for reaching the target
+             Debug.Log("Agent reached the goal! Ending episode.");
+             EndEpisode();
+        }
+
         // Movement Reward - encourages controlled movement
-       if (deltaDistance > minMovementThreshold)
+        if (deltaDistance > minMovementThreshold)
         {
-            float movementReward = Mathf.Clamp(deltaDistance * 0.5f, 0.01f, 0.5f);  
-            totalReward += movementReward;
+            totalReward += Mathf.Clamp(deltaDistance * 0.5f, 0.01f, 0.5f);  
         }
 
         // Exploration reward - encourage moving over time
@@ -181,9 +205,10 @@ public class MovementAgent : Agent
             boundarySize - Mathf.Abs(currentPosition.y)
         );
 
+        float wallReward = 0f;
         if(distanceFromBoundary < 2.0f)
         {
-            float wallReward = 0.3f * (1.0f - distanceFromBoundary/2.0f);
+            wallReward = 0.3f * (1.0f - distanceFromBoundary/2.0f);
             totalReward += wallReward;
         }
 
@@ -192,7 +217,8 @@ public class MovementAgent : Agent
         float stabilityReward = 0.05f * (1.0f - Mathf.Min(accelerationMagnitude/ maxVelocity, 1.0f));
         totalReward += stabilityReward;
 
-        Debug.Log($"Reward Breakdown -> Move: {deltaDistance * 0.5f}, Explore: {explorationReward}, Wall: {(distanceFromBoundary < 2.0f ? (0.3f * (1.0f - (distanceFromBoundary / 2.0f))) : 0)}, Stability: {stabilityReward}, Total: {totalReward}");
+        Debug.Log($"Reward Breakdown -> Move: {deltaDistance * 0.5f}, Explore: {explorationReward}, Wall: {wallReward}, Stability: {stabilityReward}, Total: {totalReward}");
+
         AddReward(totalReward);
     }
     
