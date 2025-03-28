@@ -71,6 +71,17 @@ public class MovementAgent : Agent
         Debug.Log($"New Episode! Agent Reset to: {transform.position}, Target at {target.position}");
     }
 
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        Debug.Log($"DIRECT COLLISION with {collision.gameObject.name}, layer: {collision.gameObject.layer}");
+        if (collision.gameObject.layer == LayerMask.NameToLayer("Walls"))
+    {
+        Debug.Log("Agent hit a wall!");
+        AddReward(-0.1f);
+    }
+    }
+
+
     private Vector2 GetSafeRandomPosition()
     {
         Vector2 position;
@@ -94,8 +105,12 @@ public class MovementAgent : Agent
     private bool IsPositionObstructed(Vector2 position)
     {  
         // Checks if the position is clear of obstacles
-       Collider2D[] colliders = Physics2D.OverlapCircleAll(position, 0.5f);
-       return colliders.Length > 0;
+        LayerMask wallLayerMask = LayerMask.GetMask("Walls");
+        Collider2D[] colliders = Physics2D.OverlapCircleAll(position, 0.5f, wallLayerMask);
+         return colliders.Length > 0;
+
+       //Collider2D[] colliders = Physics2D.OverlapCircleAll(position, 0.5f);
+       //return colliders.Length > 0;
     }
 
     public override void CollectObservations(VectorSensor sensor)
@@ -130,6 +145,7 @@ public class MovementAgent : Agent
     public override void OnActionReceived(ActionBuffers actions)
     {   
         Debug.Log("OnActionReceived is running!");
+        System.Console.WriteLine("****Testing");
        //Heuristic(actions);
 
        // Updates Timer
@@ -138,7 +154,7 @@ public class MovementAgent : Agent
        // Get movement actions
        float moveX = actions.ContinuousActions[0];
        float moveY = actions.ContinuousActions[1];
-
+       
        // Prevent agent from standing still when it gets zero actions
        if (Mathf.Abs(moveX) < 0.05f) moveX += Mathf.Sign(Random.Range(-1f, 1f)) * 0.1f;
        if (Mathf.Abs(moveY) < 0.05f) moveY += Mathf.Sign(Random.Range(-1f, 1f)) * 0.1f;
@@ -147,11 +163,10 @@ public class MovementAgent : Agent
 
        Vector2 moveDirection = new Vector2(moveX, moveY);
 
-       // Apply Movement
        rb.velocity = moveDirection * moveSpeed;
-
+    
        // Debug Rigidbody movement
-       Debug.Log($"Applying Velocity: {rb.velocity}");
+       //Debug.Log($"Applying Velocity: {rb.velocity}");
 
        // Clamp Velocity
        rb.velocity = Vector2.ClampMagnitude(rb.velocity, maxVelocity);
