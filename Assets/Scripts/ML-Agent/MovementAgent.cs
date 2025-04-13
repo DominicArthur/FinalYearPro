@@ -48,6 +48,7 @@ public class MovementAgent : Agent
         rb.drag = 0.5f;
         Physics2D.queriesStartInColliders = false;
     }
+    
     public override void OnEpisodeBegin()
     {
         // Reset Metrics
@@ -74,7 +75,8 @@ public class MovementAgent : Agent
     private void OnCollisionEnter2D(Collision2D collision)
     {
         Debug.Log($"DIRECT COLLISION with {collision.gameObject.name}, layer: {collision.gameObject.layer}");
-        if (collision.gameObject.layer == LayerMask.NameToLayer("Walls"))
+
+    if (collision.gameObject.layer == LayerMask.NameToLayer("Walls"))
     {
         Debug.Log("Agent hit a wall!");
         AddReward(-0.1f);
@@ -161,9 +163,10 @@ public class MovementAgent : Agent
 
        Debug.Log($"Actions Received - X: {moveX}, Y: {moveY}");
 
-       Vector2 moveDirection = new Vector2(moveX, moveY);
+       Vector2 moveDirection = new Vector2(moveX, moveY).normalized;
 
-       rb.velocity = moveDirection * moveSpeed;
+       Vector2 desiredVelocity = moveDirection * moveSpeed;
+       rb.velocity = Vector2.Lerp(rb.velocity, desiredVelocity, 0.1f);
     
        // Debug Rigidbody movement
        //Debug.Log($"Applying Velocity: {rb.velocity}");
@@ -191,18 +194,31 @@ public class MovementAgent : Agent
     {
         float totalReward = 0f;
 
+        // Goal Reward System
+        float distanceToTarget = Vector2.Distance(currentPosition,target.position);
+
         // Reward for moving toward the target
-        float distanceToTarget = Vector2.Distance(currentPosition, target.position);
-        float movementReward = (1.0f - (distanceToTarget / boundarySize)) * 0.5f;
-        totalReward += movementReward;
+        //float distanceToTarget = Vector2.Distance(currentPosition, target.position);
+        //float movementReward = (1.0f - (distanceToTarget / boundarySize)) * 0.5f;
+        //totalReward += movementReward;
 
         // Extra reward for reaching the target
-        if (distanceToTarget < 0.5f)
+        if (distanceToTarget < 0.2f)
          {
              totalReward += 2.0f; // Big reward for reaching the target
              Debug.Log("Agent reached the goal! Ending episode.");
              EndEpisode();
         }
+
+        // Penilty for standing still near the goal
+        else if(distanceToTarget < 0.8f && rb.velocity.magnitude < 0.1f)
+        {
+            totalReward -= 0.01f;
+        }
+
+        // Bonus for approaching the goal
+        float approachReward = (1f - (distanceToTarget / boundarySize)) * 0.1f;
+        totalReward += approachReward;
 
         // Movement Reward - encourages controlled movement
         if (deltaDistance > minMovementThreshold)
@@ -232,7 +248,7 @@ public class MovementAgent : Agent
         float stabilityReward = 0.05f * (1.0f - Mathf.Min(accelerationMagnitude/ maxVelocity, 1.0f));
         totalReward += stabilityReward;
 
-        Debug.Log($"Reward Breakdown -> Move: {deltaDistance * 0.5f}, Explore: {explorationReward}, Wall: {wallReward}, Stability: {stabilityReward}, Total: {totalReward}");
+        Debug.Log($"Reward Breakdown -> Approach: {approachReward}, Move: {deltaDistance * 0.5f}, Explore: {explorationReward}, Wall: {wallReward}, Stability: {stabilityReward}, Total: {totalReward}");
 
         AddReward(totalReward);
     }
@@ -254,7 +270,8 @@ public class MovementAgent : Agent
       }
 
      // Check if the agent is stuck for too long
-    if (rb.velocity.magnitude < 0.05f)  // Small movement still counts as movement
+    if (rb.velocity.magnitude < 0.05f && Vector2.Distance(lastPosition, transform.position) < 0.1f)
+     // Small movement still counts as movement
     {
         stuckTimer += Time.fixedDeltaTime;
 

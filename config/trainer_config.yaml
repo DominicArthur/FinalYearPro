@@ -24,14 +24,15 @@ behaviors:
       extrinsic:
        gamma: 0.99
        strength: 1.0
+       # normalize: true
 
    # curiosity:  # Enables curiosity-driven learning
        # strength: 0.02
         # gamma: 0.99
 
-    max_steps: 7000000  # Total number of training steps before stopping
-    time_horizon: 128  # How long the agent remembers experiences
-    summary_freq: 1000000
+    max_steps: 5000000  # Total number of training steps before stopping
+    time_horizon: 256  # How long the agent remembers experiences
+    summary_freq: 100000
     keep_checkpoints: 5  # Number of model checkpoints to save
     checkpoint_interval: 200000
     threaded: false
