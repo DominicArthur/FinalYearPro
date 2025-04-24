@@ -9,6 +9,7 @@ using UnityEditor;
 
 public class MovementAgent : Agent
 {
+    public Seeker seekerScript;
     public float moveSpeed = 3f;  // Movement speed
     public float maxVelocity = 5f;
     public float boundarySize = 7f;
@@ -22,9 +23,12 @@ public class MovementAgent : Agent
     private Vector2 lastVelocity;
     private float totalDistance;
     private float episodeTimer;
-    private const float MAX_EPISODE_TIME = 20f;
+    private const float MAX_EPISODE_TIME = 60f;
     private const float STUCK_THRESHOLD = 3f;
-    public Transform target;
+
+    public Transform seeker;
+    public LayerMask wallLayer;
+    //public Transform target;
 
     public override void Initialize()
     {   
@@ -62,14 +66,31 @@ public class MovementAgent : Agent
         lastVelocity = Vector2.zero;
 
         // Reset Position
-         Vector2 safePosition = GetSafeRandomPosition();
-         transform.position = safePosition;
-         lastPosition = safePosition;
+         Vector2 agentPosition = GetSafeRandomPosition();
+         transform.position = agentPosition;
+         lastPosition = agentPosition;
 
         // Moves target to a new random position
-        target.position = GetSafeRandomPosition();
+        //seeker.position = GetSafeRandomPosition();
+        Vector2 seekerPosition;
+        do 
+        {
+            seekerPosition = new Vector2(
+                Random.Range(agentPosition.x - 2f, agentPosition.x + 2f), 
+                Random.Range(agentPosition.y - 2f, agentPosition.y + 2f)
+                );
+        }       
+        while (Vector2.Distance(seekerPosition, agentPosition) < 2f);
+        
+        seeker.position = seekerPosition;
 
-        Debug.Log($"New Episode! Agent Reset to: {transform.position}, Target at {target.position}");
+        if(seekerScript != null)
+        {   
+            Debug.Log("[Agent] Calling Seeker.OnEpisodeBegin()");
+            seekerScript.OnEpisodeBegin();
+        }
+
+        Debug.Log($"New Episode! Agent Reset to: {transform.position}, Target at {seeker.position}");
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -122,8 +143,8 @@ public class MovementAgent : Agent
         sensor.AddObservation(transform.position.y / boundarySize);  // 2nd observation (Y position)
 
         // Target Position
-        sensor.AddObservation(target.position.x / boundarySize);
-        sensor.AddObservation(target.position.y / boundarySize);
+        sensor.AddObservation(seeker.position.x / boundarySize);
+        sensor.AddObservation(seeker.position.y / boundarySize);
 
          // Agent's velocity to allow it to learn acceleration & stopping
         sensor.AddObservation(rb.velocity.x / maxVelocity);
@@ -137,8 +158,8 @@ public class MovementAgent : Agent
         sensor.AddObservation(distanceFromBoundary);
 
         // Distance from target
-        float distanceToTarget = Vector2.Distance(transform.position, target.position);
-        sensor.AddObservation(distanceToTarget / boundarySize);
+        float distanceToSeeker = Vector2.Distance(transform.position, seeker.position);
+        sensor.AddObservation(distanceToSeeker / boundarySize);
 
         // Time remaining in episode
         sensor.AddObservation(episodeTimer / MAX_EPISODE_TIME);
@@ -158,10 +179,10 @@ public class MovementAgent : Agent
        float moveY = actions.ContinuousActions[1];
        
        // Prevent agent from standing still when it gets zero actions
-       if (Mathf.Abs(moveX) < 0.05f) moveX += Mathf.Sign(Random.Range(-1f, 1f)) * 0.1f;
-       if (Mathf.Abs(moveY) < 0.05f) moveY += Mathf.Sign(Random.Range(-1f, 1f)) * 0.1f;
+       //if (Mathf.Abs(moveX) < 0.05f) moveX += Mathf.Sign(Random.Range(-1f, 1f)) * 0.1f;
+       //if (Mathf.Abs(moveY) < 0.05f) moveY += Mathf.Sign(Random.Range(-1f, 1f)) * 0.1f;
 
-       Debug.Log($"Actions Received - X: {moveX}, Y: {moveY}");
+       //Debug.Log($"Actions Received - X: {moveX}, Y: {moveY}");
 
        Vector2 moveDirection = new Vector2(moveX, moveY).normalized;
 
@@ -182,6 +203,9 @@ public class MovementAgent : Agent
        // Calculate Rewards
        CalculateRewards(currentPosition, deltaDistance);
 
+       // Reward for surviving time
+       AddReward(Time.fixedDeltaTime * 0.01f);
+
        // Update last position and velocity
        lastPosition = currentPosition;
        lastVelocity = rb.velocity;
@@ -193,49 +217,54 @@ public class MovementAgent : Agent
     private void CalculateRewards(Vector2 currentPosition, float deltaDistance)
     {
         float totalReward = 0f;
+        float cornerPenalty = 0f;
 
         // Goal Reward System
-        float distanceToTarget = Vector2.Distance(currentPosition,target.position);
+        float distanceToSeeker = Vector2.Distance(currentPosition,seeker.position);
 
         // Reward for moving toward the target
         //float distanceToTarget = Vector2.Distance(currentPosition, target.position);
         //float movementReward = (1.0f - (distanceToTarget / boundarySize)) * 0.5f;
         //totalReward += movementReward;
 
-        // Extra reward for reaching the target
-        if (distanceToTarget < 0.2f)
+        if (distanceToSeeker < 1.0f)
          {
-             totalReward += 2.0f; // Big reward for reaching the target
-             Debug.Log("Agent reached the goal! Ending episode.");
-             EndEpisode();
+            AddReward(-1.0f);
+            EndEpisode();
+            return;             
         }
 
         // Penilty for standing still near the goal
-        else if(distanceToTarget < 0.8f && rb.velocity.magnitude < 0.1f)
+        else if(distanceToSeeker < 0.8f && rb.velocity.magnitude < 0.1f)
         {
-            totalReward -= 0.01f;
+            totalReward -= 0.1f;
         }
 
+        // Encourage staying far away
+        float escapeReward = Mathf.Clamp(distanceToSeeker / boundarySize, 0f, 1f) * 0.2f;
+        totalReward += escapeReward;
+
         // Bonus for approaching the goal
-        float approachReward = (1f - (distanceToTarget / boundarySize)) * 0.1f;
-        totalReward += approachReward;
+        //float approachReward = Mathf.Clamp((1f - (distanceToSeeker / boundarySize)) * 0.2f, 0f, 0.2f);
+        //float approachReward = (1f - (distanceToTarget / boundarySize)) * 0.1f;
+        //totalReward += approachReward;
 
         // Movement Reward - encourages controlled movement
         if (deltaDistance > minMovementThreshold)
         {
-            totalReward += Mathf.Clamp(deltaDistance * 0.5f, 0.01f, 0.5f);  
+            totalReward += Mathf.Clamp(deltaDistance * 0.1f, 0.01f, 0.1f);  
         }
 
         // Exploration reward - encourage moving over time
         float explorationReward = 0.02f;
         totalReward += explorationReward;
-
-        // Wall Proximity Reward - encourages staying near walls
+        
         float distanceFromBoundary = Mathf.Min(
             boundarySize - Mathf.Abs(currentPosition.x),
             boundarySize - Mathf.Abs(currentPosition.y)
         );
 
+        // Wall Proximity Reward - encourages staying near walls
         float wallReward = 0f;
         if(distanceFromBoundary < 2.0f)
         {
@@ -243,21 +272,42 @@ public class MovementAgent : Agent
             totalReward += wallReward;
         }
 
+        if (distanceToSeeker < 0.8f && stuckTimer >= 2.0f)
+        {
+
+         Debug.Log("Agent loitered near the seeker too long — ending episode.");
+         AddReward(-0.5f);
+         EndEpisode();
+         
+        }       
+
         // Stability reward - encourages smooth changes in direction
         float accelerationMagnitude = ((rb.velocity - lastVelocity) / Time.fixedDeltaTime).magnitude;
         float stabilityReward = 0.05f * (1.0f - Mathf.Min(accelerationMagnitude/ maxVelocity, 1.0f));
         totalReward += stabilityReward;
 
-        Debug.Log($"Reward Breakdown -> Approach: {approachReward}, Move: {deltaDistance * 0.5f}, Explore: {explorationReward}, Wall: {wallReward}, Stability: {stabilityReward}, Total: {totalReward}");
+        // Hiding reward - encorages hider to hide behind walls
+        int wallsBetween = CountWallsBetweenSeekerAndHider();
+        float hidingReward = Mathf.Clamp(Mathf.Pow(wallsBetween, 1.5f), 0f, 5f) * 0.04f;
+        totalReward += hidingReward;
+        Debug.Log($"Hiding Reward (walls between): {hidingReward}");
 
+        //Debug.Log($"Reward Breakdown -> Move: {deltaDistance * 0.5f}, Explore: {explorationReward}, Wall: {wallReward}, Stability: {stabilityReward}, Total: {totalReward}");
+
+        if (Mathf.Abs(transform.position.x) > boundarySize * 0.9f && Mathf.Abs(transform.position.y) > boundarySize * 0.9f)
+        {
+            cornerPenalty = -0.2f;
+        }
+        AddReward(cornerPenalty);
         AddReward(totalReward);
     }
     
      private void CheckEndEpisode()
     {  
        Debug.Log("CheckEndEpisode() is being called!");
-       Debug.Log($"Checking Out-of-Bounds: Position {transform.position}, Boundary: {boundarySize}");
-
+       //Debug.Log($"Checking Out-of-Bounds: Position {transform.position}, Boundary: {boundarySize}");
+       
+    /*
        bool outOfBounds = Mathf.Abs(transform.position.x) > boundarySize || 
                        Mathf.Abs(transform.position.y) > boundarySize;
 
@@ -269,25 +319,40 @@ public class MovementAgent : Agent
         return;
       }
 
+    */
+
      // Check if the agent is stuck for too long
     if (rb.velocity.magnitude < 0.05f && Vector2.Distance(lastPosition, transform.position) < 0.1f)
      // Small movement still counts as movement
     {
         stuckTimer += Time.fixedDeltaTime;
 
-        Debug.Log($"Agent Velocity: {rb.velocity.magnitude}, Stuck Timer: {stuckTimer}");
+        float distanceToSeeker = Vector2.Distance(transform.position, seeker.position);
 
-        if (stuckTimer >= STUCK_THRESHOLD)
+        if (distanceToSeeker < 1.5f && stuckTimer >= STUCK_THRESHOLD)
         {
-            Debug.Log("Agent has been stuck for too long! Ending episode.");
+            Debug.Log("Agent has been near seeker too long! Ending episode.");
             AddReward(-0.1f);
             EndEpisode();
+        }
+
+        if(stuckTimer >= 1.0f)
+        {
+            Debug.Log($"Agent Velocity: {rb.velocity.magnitude}, Stuck Timer: {stuckTimer}");
         }
     }
     else
     {
         stuckTimer = 0f; // Reset timer when the agent moves
     }
+
+     // Check if the episode timer has exceeded the max time
+    if (episodeTimer >= MAX_EPISODE_TIME)
+    {
+        Debug.Log("Time's up! Ending episode.");
+        EndEpisode();  // End the episode after the timer runs out
+    }
+    
     }
     public override void Heuristic(in ActionBuffers actionsOut)
     {   
@@ -306,8 +371,35 @@ public class MovementAgent : Agent
         Debug.Log($"Heuristic Controls - X: {continuousActions[0]}, Y: {continuousActions[1]}");
     }
 
+    private int CountWallsBetweenSeekerAndHider()
+    {   
+        Vector2 direction = seeker.position - transform.position;
+        float distance = direction.magnitude;
+
+         Debug.DrawRay(transform.position, direction.normalized * distance, Color.green, 0.1f);
+
+        RaycastHit2D[] hits = Physics2D.RaycastAll(transform.position, direction.normalized, distance, wallLayer);
+       
+        int wallCount = 0;
+        foreach(var hit in hits)
+        {
+            if(hit.collider != null && hit.collider.gameObject != seeker.gameObject)
+            {   
+                Debug.Log($"[Ray Hit] {hit.collider.gameObject.name}");
+                wallCount++;
+            }
+        }
+        return wallCount;
+    }
     private void FixedUpdate()
     {
         RequestDecision();  // Tells the agent to request a new action
+    }
+
+    private void OnDrawGizmos()
+    {   
+        //Debug.Log("Boundary Size: " + boundarySize);
+        Gizmos.color = Color.blue;
+        Gizmos.DrawWireCube(Vector3.zero, new Vector3(boundarySize * 2, boundarySize * 2, 0));
     }
 }

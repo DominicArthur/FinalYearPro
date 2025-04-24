@@ -30,9 +30,9 @@ behaviors:
        # strength: 0.02
         # gamma: 0.99
 
-    max_steps: 5000000  # Total number of training steps before stopping
+    max_steps: 2000000  # Total number of training steps before stopping
     time_horizon: 256  # How long the agent remembers experiences
-    summary_freq: 100000
+    summary_freq: 5000
     keep_checkpoints: 5  # Number of model checkpoints to save
     checkpoint_interval: 200000
     threaded: false
