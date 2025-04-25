@@ -264,6 +264,7 @@ public class MovementAgent : Agent
             boundarySize - Mathf.Abs(currentPosition.y)
         );
 
+        /*
         // Wall Proximity Reward - encourages staying near walls
         float wallReward = 0f;
         if(distanceFromBoundary < 2.0f)
@@ -271,6 +272,7 @@ public class MovementAgent : Agent
             wallReward = 0.3f * (1.0f - distanceFromBoundary/2.0f);
             totalReward += wallReward;
         }
+        */
 
         if (distanceToSeeker < 0.8f && stuckTimer >= 2.0f)
         {
@@ -288,10 +290,15 @@ public class MovementAgent : Agent
 
         // Hiding reward - encorages hider to hide behind walls
         int wallsBetween = CountWallsBetweenSeekerAndHider();
-        float hidingReward = Mathf.Clamp(Mathf.Pow(wallsBetween, 1.5f), 0f, 5f) * 0.04f;
+        //Debug.Log($"[Hiding Check] Walls Between: {wallsBetween}, Agent Pos: {transform.position}, Seeker Pos: {seeker.position}");
+        float hidingReward = Mathf.Clamp(Mathf.Pow(wallsBetween, 1.5f), 0f, 5f) * 0.1f;
         totalReward += hidingReward;
         Debug.Log($"Hiding Reward (walls between): {hidingReward}");
 
+        if (wallsBetween == 0)
+        {
+            totalReward -= 0.05f;
+        }
         //Debug.Log($"Reward Breakdown -> Move: {deltaDistance * 0.5f}, Explore: {explorationReward}, Wall: {wallReward}, Stability: {stabilityReward}, Total: {totalReward}");
 
         if (Mathf.Abs(transform.position.x) > boundarySize * 0.9f && Mathf.Abs(transform.position.y) > boundarySize * 0.9f)
