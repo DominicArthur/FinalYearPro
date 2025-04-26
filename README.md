@@ -9,5 +9,6 @@ This project is a reinforcement learning system that was build inside Unity usin
 - Python 3.10
 - PyTorch
 - TensorBoard
+- NVIDIA RTX GPU - Used to accelerate training
 ## How to run
 ## User manual 
