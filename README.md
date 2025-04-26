@@ -54,7 +54,7 @@ This project is a reinforcement learning system that was built inside Unity usin
   ```bash
   mlagents-learn config/trainer-config.yaml --run-id=YourRunID --train 
   ```
-  --train can be **--resume** to continue training or **--force** to start fresh
+  **--train** can be **--resume** to continue training or **--force** to start fresh
   <br> Inside Unity, click the **Play** icon to allow the agent to interact with the environment
   
  2. **Watching the Agent:**
