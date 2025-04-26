@@ -44,4 +44,27 @@ This project is a reinforcement learning system that was built inside Unity usin
  6. **Play or Observe Agent Behavior:**
  <br> After training, you can run inference mode to watch the agent inside Unity.
 
-## User manual 
+## User manual
+
+1. **Training the Agent:**
+
+- Open a terminal, activate your virtual environment.
+- Run the following command to begin training:
+
+  ```bash
+  mlagents-learn config/trainer-config.yaml --run-id=YourRunID --train 
+  ```
+  --train can be **--resume** to continue training or **--force** to start fresh
+  <br> Inside Unity, click the **Play** icon to allow the agent to interact with the environment
+  
+ 2. **Watching the Agent:**
+    - After training, click on the **Play** button in Unity to watch the trained agent interact with the environment and show off it's new behavior
+      
+>**Note:**
+> If you would like to manually test a specific trained model (e.g. a **.nn** file you have from previous training), you can: 
+> - Add the **.nn** file into your Unity Project (Into an Assets folder).
+> - Select the Agent GameObject in your scene.
+> - In the **Behavior Parameters** component:
+>   - Assign the imported model under the **Model** field.
+>   - Set the **Behavior Type** to **Inference Only**.
+> - Press **Play** to watch the agent behave based on the model selected. 
