@@ -74,3 +74,4 @@ This project is a reinforcement learning system that was built inside Unity usin
 >   - Set the **Behavior Type** to **Inference Only**.
 > - Press **Play** to watch the agent behave based on the model selected.
 > - If you would like to use one of  the models I trained. I added two too "ML-Agents-Models", "hiding-walls-v3" is the final working model.
+> - Only selected models from training were selected to avoid clutter.
