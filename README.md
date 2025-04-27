@@ -44,6 +44,11 @@ This project is a reinforcement learning system that was built inside Unity usin
  6. **Play or Observe Agent Behavior:**
  <br> After training, you can run inference mode to watch the agent inside Unity.
 
+ 7. **Using TensorBoard:**
+ <br> After or during training, you can use the following command to view your results on multiple graphs in real time:
+ ```bash
+ tensorboard --logdir results
+ ```
 ## User manual
 
 1. **Training the Agent:**
