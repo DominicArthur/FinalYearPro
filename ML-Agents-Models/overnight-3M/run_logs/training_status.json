@@ -1,0 +1,65 @@
+{
+    "Movement": {
+        "checkpoints": [
+            {
+                "steps": 2399963,
+                "file_path": "results\\overnight-3M\\Movement\\Movement-2399963.onnx",
+                "reward": 295.5055408477783,
+                "creation_time": 1740194908.1986709,
+                "auxillary_file_paths": [
+                    "results\\overnight-3M\\Movement\\Movement-2399963.pt"
+                ]
+            },
+            {
+                "steps": 2599937,
+                "file_path": "results\\overnight-3M\\Movement\\Movement-2599937.onnx",
+                "reward": null,
+                "creation_time": 1740196125.6830692,
+                "auxillary_file_paths": [
+                    "results\\overnight-3M\\Movement\\Movement-2599937.pt"
+                ]
+            },
+            {
+                "steps": 2799971,
+                "file_path": "results\\overnight-3M\\Movement\\Movement-2799971.onnx",
+                "reward": null,
+                "creation_time": 1740197350.4133656,
+                "auxillary_file_paths": [
+                    "results\\overnight-3M\\Movement\\Movement-2799971.pt"
+                ]
+            },
+            {
+                "steps": 2999954,
+                "file_path": "results\\overnight-3M\\Movement\\Movement-2999954.onnx",
+                "reward": null,
+                "creation_time": 1740198602.9390936,
+                "auxillary_file_paths": [
+                    "results\\overnight-3M\\Movement\\Movement-2999954.pt"
+                ]
+            },
+            {
+                "steps": 3000018,
+                "file_path": "results\\overnight-3M\\Movement\\Movement-3000018.onnx",
+                "reward": null,
+                "creation_time": 1740198603.0817327,
+                "auxillary_file_paths": [
+                    "results\\overnight-3M\\Movement\\Movement-3000018.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 3000018,
+            "file_path": "results\\overnight-3M\\Movement.onnx",
+            "reward": null,
+            "creation_time": 1740198603.0817327,
+            "auxillary_file_paths": [
+                "results\\overnight-3M\\Movement\\Movement-3000018.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "0.30.0",
+        "torch_version": "2.5.1+cu121"
+    }
+}

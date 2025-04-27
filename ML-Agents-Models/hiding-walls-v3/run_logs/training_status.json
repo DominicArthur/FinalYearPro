@@ -1,0 +1,65 @@
+{
+    "Movement": {
+        "checkpoints": [
+            {
+                "steps": 3399939,
+                "file_path": "results\\hiding-walls-v3\\Movement\\Movement-3399939.onnx",
+                "reward": 1260.2072982788086,
+                "creation_time": 1745710130.542779,
+                "auxillary_file_paths": [
+                    "results\\hiding-walls-v3\\Movement\\Movement-3399939.pt"
+                ]
+            },
+            {
+                "steps": 3599795,
+                "file_path": "results\\hiding-walls-v3\\Movement\\Movement-3599795.onnx",
+                "reward": 1211.8746223449707,
+                "creation_time": 1745711431.222395,
+                "auxillary_file_paths": [
+                    "results\\hiding-walls-v3\\Movement\\Movement-3599795.pt"
+                ]
+            },
+            {
+                "steps": 3799845,
+                "file_path": "results\\hiding-walls-v3\\Movement\\Movement-3799845.onnx",
+                "reward": 1198.0858268737793,
+                "creation_time": 1745712707.044151,
+                "auxillary_file_paths": [
+                    "results\\hiding-walls-v3\\Movement\\Movement-3799845.pt"
+                ]
+            },
+            {
+                "steps": 3999980,
+                "file_path": "results\\hiding-walls-v3\\Movement\\Movement-3999980.onnx",
+                "reward": null,
+                "creation_time": 1745713993.3126163,
+                "auxillary_file_paths": [
+                    "results\\hiding-walls-v3\\Movement\\Movement-3999980.pt"
+                ]
+            },
+            {
+                "steps": 4000236,
+                "file_path": "results\\hiding-walls-v3\\Movement\\Movement-4000236.onnx",
+                "reward": null,
+                "creation_time": 1745713993.5773783,
+                "auxillary_file_paths": [
+                    "results\\hiding-walls-v3\\Movement\\Movement-4000236.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 4000236,
+            "file_path": "results\\hiding-walls-v3\\Movement.onnx",
+            "reward": null,
+            "creation_time": 1745713993.5773783,
+            "auxillary_file_paths": [
+                "results\\hiding-walls-v3\\Movement\\Movement-4000236.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "0.30.0",
+        "torch_version": "2.5.1+cu121"
+    }
+}
